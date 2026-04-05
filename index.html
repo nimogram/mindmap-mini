@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OKR Strategic Dash | Cloud Pro Edition</title>
+    <title>OKR Strategic Dash | 10x Insight Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -29,17 +29,31 @@
             background-image: linear-gradient(var(--neon-green) 1px, transparent 1px), linear-gradient(90deg, var(--neon-green) 1px, transparent 1px);
             background-size: 40px 40px;
         }
+        /* Hint Ticker */
+        #hint-ticker {
+            width: 100%; min-height: 48px; background: rgba(0, 255, 204, 0.05);
+            border-bottom: 1px solid rgba(0, 255, 204, 0.2);
+            padding: 8px 20px; display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: bold; color: var(--neon-green);
+            text-align: center; letter-spacing: 0.05em; z-index: 1000;
+            box-shadow: inset 0 0 15px rgba(0, 255, 204, 0.1);
+        }
+        #hint-text::after {
+            content: '|'; animation: blink 1s step-end infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
         /* Sidebar */
         #sidebar {
             position: fixed; top: 0; left: -100%; width: 85%; max-width: 320px; height: 100%;
-            background: var(--panel-bg); z-index: 500; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            background: var(--panel-bg); z-index: 2000; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             border-right: 1px solid var(--neon-green); padding: 20px; display: flex; flex-direction: column;
             box-shadow: 20px 0 50px rgba(0,0,0,0.8);
         }
         #sidebar.open { transform: translateX(100%); }
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7);
-            display: none; z-index: 400; backdrop-filter: blur(3px);
+            display: none; z-index: 1500; backdrop-filter: blur(3px);
         }
         .overlay.show { display: block; }
         /* Nodes */
@@ -72,8 +86,13 @@
 <body>
 
 <div id="app-container">
+    <!-- Ticker -->
+    <div id="hint-ticker">
+        <span id="hint-text">STRATEGIZING...</span>
+    </div>
+
     <div class="grid-bg"></div>
-    <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 z-[4000] bg-[#00ffcc] text-black px-4 py-2 rounded-full font-bold text-xs opacity-0 transition-opacity duration-300 pointer-events-none">SUCCESS</div>
+    <div id="toast" class="fixed top-24 left-1/2 -translate-x-1/2 z-[4000] bg-[#00ffcc] text-black px-4 py-2 rounded-full font-bold text-xs opacity-0 transition-opacity duration-300 pointer-events-none">SUCCESS</div>
     <div class="overlay" id="overlay"></div>
 
     <!-- Sidebar -->
@@ -142,7 +161,7 @@
         </div>
     </header>
 
-    <div id="nav-area" class="absolute top-24 left-4 z-40 hidden">
+    <div id="nav-area" class="absolute top-28 left-4 z-40 hidden">
         <button id="btn-back" class="flex items-center gap-2 px-4 py-2 bg-orange-500/10 border border-orange-500 text-orange-500 rounded-xl font-black text-[10px] uppercase tracking-wider shadow-lg">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"></polyline></svg>
             <span id="back-label">Back</span>
@@ -166,14 +185,75 @@
     /** --- CONFIGURATION --- **/
     const GAS_URL = "https://script.google.com/macros/s/AKfycbxpjj3BRsCRNzvnE8prKUi1GuGmyAVudSEeJmOTmziBA9hHWTCOoSZNfJEwDjduLbcdNQ/exec"; 
 
-    /** --- INITIAL DATA --- **/
+    /** --- HINTS FOR 10X THINKING --- **/
+    const HINTS = [
+        "10%の改善は「今の延長」だが、10倍の成長は「今の破壊」から始まる。",
+        "不可能だと思える目標（ムーンショット）こそが、脳を既存の枠組みから解放する。",
+        "「どうすればできるか」ではなく「どうなっていれば10倍か」という逆算から入る。",
+        "失敗は「エラー」ではなく、10倍への道筋を修正するための「必須データ」である。",
+        "「10%改善」の誘惑を捨てよ。それは漸進的な死（停滞）への道である。",
+        "完璧を目指すな。10倍のスピードで試行し、10倍の速さで失敗せよ。",
+        "「予算がない」「人が足りない」という制約こそが、10xなアイデアの母体となる。",
+        "チームに「10倍の目標」を掲げることで、妥協のない創造的な対話を引き出す。",
+        "「できない理由」を語る時間を、システムの「構造的な制約」を見つける時間に変える。",
+        "大きなビジョンは、最高のリソース（人・金・情報）を引き寄せる磁石になる。",
+        "10xなアイデアを殺す「常識というバグ」に対し、あえてNOを突きつける。",
+        "手作業を自動化するのではなく、手作業が「発生しない構造」を再設計する。",
+        "スケーラビリティ（拡張性）のない作業は、時給10分の1の仕事だと切り捨てる。",
+        "AIを「道具」として使う段階を超え、AIを前提とした「新しいOS」を組む。",
+        "10倍の負荷に耐えられないプロトコルは、今すぐ破棄して作り直す。",
+        "「仕組み」そのものをレバレッジポイントとし、最小の入力で10倍の出力を狙う。",
+        "既存の市場で戦うな。10倍の価値を提供できる「新しい市場」を自ら定義せよ。",
+        "リーダーの役割は、部下に「10%の努力」を強いることではなく「10xの視点」を与えること。",
+        "リソースを分散させるな。10xの可能性を持つ一点に、全戦力を集中投下せよ。",
+        "「今のやり方の延長」で2倍を狙うより、「全く違うやり方」で10倍を狙う方が実は易しい。",
+        "成功の定義を「目標達成」から「システムの進化」に置き換える。",
+        "10x思考とは、勇気ではなく「論理的な飛躍」を選択することである。",
+        "今日のアクションが、50年後の10倍の成果に繋がっているかを常に問う。",
+        "「もし今のリソースが100倍あったら？」という思考実験で制約を外す。",
+        "変化を待つな。自らが市場を「10倍複雑にする」か「10倍シンプルにする」か選べ。",
+        "10xを阻む最大の敵は、昨日の「そこそこの成功」である。",
+        "10%の利益を積み上げる投資より、10倍の資産価値を生む「仕組み」に資本を投じる。",
+        "複利という「10xな自己強化ループ」を最大限に活かせ。",
+        "消費は10%の満足だが、投資は10倍の未来を創る。この比率を常に最適化せよ。",
+        "「価格」で競争するループを抜け出し、「10倍の価値（バリュー）」で価格を無効化する。",
+        "Objectives（目標）は、ワクワクするほど野心的で、心躍る言葉で定義する。",
+        "Key Results（主な結果）は、誰が見ても明白な「数値」と「期限」で定量化する。",
+        "OKRの達成率は「60〜70%」が理想。100%達成は目標が低すぎた証拠（バグ）である。",
+        "ムーンショット（10x）とコミットメント（必達）のOKRを明確に区別して運用する。",
+        "組織のOKRと個人のOKRを「連鎖（アライメント）」させ、ベクトルを一点に集中させる。",
+        "戦略を絞り込め。OKRは「最優先事項」だけにフォーカスし、それ以外を捨てる。",
+        "OKRは「評価制度（給与）」と切り離す。失敗を恐れず挑戦できる環境を作る。",
+        "状況の変化に合わせ、四半期ごとにOKRを大胆にアップデート（デバッグ）する。",
+        "チェックイン（定例進捗確認）を週次で行い、停滞のループを即座に検知する。",
+        "ウィン・セッション（成果の共有会）を設け、小さな前進をポジティブにフィードバックする。",
+        "スプレッドシートやツールでOKRを「完全公開」し、情報の透明性を担保する。",
+        "コンフィデンス・スコアを10段階で可視化し、早期にアラートを出す。",
+        "OKRを日々のタスク（To-Do）の優先順位を決定するOSにする。",
+        "ボトルネックが発生しているKRにリソースを集中させ、システム全体の出力を上げる。",
+        "測定不能なKRは、KRではない。すべてをデータ（エビデンス）で語る文化を作る。",
+        "失敗は「学習」である。未達のOKRから得たインサイトこそが、次期の資産になる。",
+        "「これまでのやり方」では届かない目標を設定し、思考を10xへと飛躍させる。",
+        "困難な目標に挑む自分を誇り、プロセスの中にある「成長」を最大化する。",
+        "批判的な現状分析より、理想の未来から逆算する思考を優先する。",
+        "「何をやらないか」を決定することが、OKRにおける最もクリエイティブな仕事である。",
+        "完璧なOKRを立てることより、まず運用を「回し始める」スピードを重視する。",
+        "1on1では進捗管理だけでなく、達成を阻む「心理的な障壁」のデバッグを行う。",
+        "CFR（対話・フィードバック・承認）を循環させ、チームのエンゲージメントを高める。",
+        "目標を「自分ごと化」させるため、トップダウンとボトムアップの議論を融合させる。",
+        "KRの未達を責めるのではなく、未達の原因となっている「構造」を共に探る。",
+        "成功を称賛する文化が、次の野心的な挑戦への燃料（エネルギー）になる。",
+        "投資対効果（ROI）の低いKRは、期中であっても勇気を持って「損切り」する。",
+        "資産価値を10倍にするためのKRを一つだけ設定し、そこに資本を集中投下する。",
+        "売上という「結果」だけでなく、売上を生む「先行指標（KR）」を緻密に管理する。",
+        "複利効果が効くような「仕組みの構築」をKRの柱に据え、長期的な富を設計する。"
+    ];
+
+    /** --- INITIAL DATA (CLEAN START) --- **/
     const initialData = {
-        "Strategic Plan Q2": {
-            label: "Q2 売上目標達成", value: "72", unit: "%",
-            children: [
-                { label: "新規顧客獲得", value: "85", unit: "%", children: [] },
-                { label: "既存顧客深掘り", value: "1.2", unit: "M$", children: [] }
-            ]
+        "New Strategy": {
+            label: "Strategic Objective", value: "0", unit: "%",
+            children: []
         }
     };
 
@@ -194,7 +274,32 @@
     const inputValue = document.getElementById('input-value');
     const inputUnit = document.getElementById('input-unit');
     const toast = document.getElementById('toast');
+    const hintTextEl = document.getElementById('hint-text');
     let modalAction = null;
+
+    /** --- TYPING ANIMATION LOGIC --- **/
+    let currentHintIndex = -1;
+    function typeHint() {
+        let nextIndex;
+        do {
+            nextIndex = Math.floor(Math.random() * HINTS.length);
+        } while (nextIndex === currentHintIndex);
+        currentHintIndex = nextIndex;
+        
+        const text = HINTS[currentHintIndex];
+        hintTextEl.innerText = "";
+        let i = 0;
+        
+        const interval = setInterval(() => {
+            if (i < text.length) {
+                hintTextEl.innerText += text.charAt(i);
+                i++;
+            } else {
+                clearInterval(interval);
+                setTimeout(typeHint, 8000); // Wait for 8 seconds
+            }
+        }, 120); // ★ 50msから120msに低速化。ニモさんの思考ペースに最適化。
+    }
 
     /** --- HELPERS --- **/
     function getCurrentNode() {
@@ -377,7 +482,7 @@
                             delete allMaps[id];
                             if(currentMapId === id) {
                                 currentMapId = Object.keys(allMaps)[0] || 'Default';
-                                if(!allMaps[currentMapId]) allMaps[currentMapId] = initialData["Strategic Plan Q2"];
+                                if(!allMaps[currentMapId]) allMaps[currentMapId] = initialData["New Strategy"];
                             }
                             navigationPath = [];
                         }
@@ -483,8 +588,10 @@
         }, 30);
     });
 
+    // Start everything
     render();
     animate();
+    typeHint();
 </script>
 </body>
 </html>
