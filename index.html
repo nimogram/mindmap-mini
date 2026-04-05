@@ -7,11 +7,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
-            --neon-green: #00ffcc;
+            /* メインカラー：ネオングリーンに回帰 */
+            --neon-green: #00ffcc; 
+            /* アクセントカラー：ライムグリーン（戻るボタン用） */
+            --lime-green: #a3e635;
             --bg-dark: #050a10;
             --warning-amber: #ffaa00;
             --node-bg: rgba(5, 35, 35, 0.95);
-            --panel-bg: rgba(5, 10, 15, 0.98);
+            --panel-bg: rgba(5, 12, 10, 0.98);
         }
         body {
             background-color: var(--bg-dark);
@@ -31,11 +34,11 @@
         }
         /* Hint Ticker */
         #hint-ticker {
-            width: 100%; min-height: 48px; background: rgba(0, 255, 204, 0.05);
+            width: 100%; min-height: 52px; background: rgba(0, 255, 204, 0.05);
             border-bottom: 1px solid rgba(0, 255, 204, 0.2);
-            padding: 8px 20px; display: flex; align-items: center; justify-content: center;
-            font-size: 12px; font-weight: bold; color: var(--neon-green);
-            text-align: center; letter-spacing: 0.05em; z-index: 1000;
+            padding: 10px 20px; display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: bold; color: var(--neon-green);
+            text-align: center; letter-spacing: 0.05em; z-index: 100;
             box-shadow: inset 0 0 15px rgba(0, 255, 204, 0.1);
         }
         #hint-text::after {
@@ -58,14 +61,14 @@
         .overlay.show { display: block; }
         /* Nodes */
         .center-node {
-            position: absolute; width: 170px; min-height: 90px; z-index: 50; padding: 15px;
+            position: absolute; width: 170px; min-height: 95px; z-index: 50; padding: 15px;
             background: linear-gradient(145deg, #004d40, #001a1a);
             border: 2px solid var(--neon-green); border-radius: 40px;
             display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
             box-shadow: 0 0 50px rgba(0, 255, 204, 0.4);
         }
         .node {
-            position: absolute; min-width: 120px; padding: 14px 18px; z-index: 10;
+            position: absolute; min-width: 125px; padding: 14px 18px; z-index: 10;
             background: var(--node-bg); border: 1px solid rgba(0, 255, 204, 0.5);
             border-radius: 20px; display: flex; flex-direction: column; align-items: center; text-align: center;
             box-shadow: 0 8px 25px rgba(0,0,0,0.6); transition: opacity 0.3s;
@@ -81,18 +84,53 @@
             width: 100%; max-width: 320px; border-radius: 35px; padding: 28px;
             box-shadow: 0 0 60px rgba(0, 255, 204, 0.3);
         }
+        /* Back Button - ライムグリーン専用指定 */
+        #btn-back {
+            background: rgba(163, 230, 53, 0.15); 
+            border: 1px solid var(--lime-green); 
+            color: var(--lime-green);
+        }
     </style>
 </head>
 <body>
 
 <div id="app-container">
-    <!-- Ticker -->
+    <div class="grid-bg"></div>
+
+    <!-- Header (最上部) -->
+    <header class="relative z-50 flex items-center justify-between p-4 bg-[#050a10]/95 backdrop-blur-md border-b border-cyan-500/20">
+        <div class="flex items-center gap-3" id="btn-menu">
+            <div class="p-2 bg-cyan-900/30 border border-cyan-500/50 rounded-lg text-[#00ffcc] active:scale-90 transition-transform">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </div>
+            <div class="flex flex-col">
+                <div class="text-[11px] text-cyan-400 font-black tracking-widest uppercase truncate max-w-[150px]" id="display-map-id">Select Map</div>
+                <div class="text-[8px] text-gray-500 font-bold mt-1 uppercase leading-none tracking-tighter">Strategic Hub</div>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <button id="btn-pause" class="p-2 border border-cyan-800 rounded-lg text-cyan-400">
+                <svg id="svg-stop" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                <svg id="svg-play" class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </button>
+            <button id="btn-save" class="px-4 py-1 border border-cyan-800 rounded-lg text-[10px] font-black uppercase">Cloud Save</button>
+        </div>
+    </header>
+
+    <!-- Ticker (メニューの下) -->
     <div id="hint-ticker">
-        <span id="hint-text">STRATEGIZING...</span>
+        <span id="hint-text">LOADING 10X INSIGHTS...</span>
     </div>
 
-    <div class="grid-bg"></div>
-    <div id="toast" class="fixed top-24 left-1/2 -translate-x-1/2 z-[4000] bg-[#00ffcc] text-black px-4 py-2 rounded-full font-bold text-xs opacity-0 transition-opacity duration-300 pointer-events-none">SUCCESS</div>
+    <!-- Back Button Area (ライムグリーン適用) -->
+    <div id="nav-area" class="relative z-40 hidden px-4 pt-4">
+        <button id="btn-back" class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-[11px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span id="back-label">Back</span>
+        </button>
+    </div>
+
+    <div id="toast" class="fixed top-32 left-1/2 -translate-x-1/2 z-[4000] bg-[#00ffcc] text-black px-4 py-2 rounded-full font-bold text-[10px] opacity-0 transition-opacity duration-300 pointer-events-none shadow-lg">SUCCESS</div>
     <div class="overlay" id="overlay"></div>
 
     <!-- Sidebar -->
@@ -132,7 +170,7 @@
                         </select>
                     </div>
                 </div>
-                <p id="modal-desc" class="text-gray-400 text-sm hidden"></p>
+                <p id="modal-desc" class="text-gray-400 text-sm hidden font-bold"></p>
             </div>
             <div class="flex gap-3">
                 <button id="modal-cancel" class="flex-1 py-4 border border-red-900 text-red-500 rounded-2xl font-black text-[11px] uppercase tracking-widest active:bg-red-900/20">Abort</button>
@@ -141,43 +179,16 @@
         </div>
     </div>
 
-    <!-- Header -->
-    <header class="relative z-50 flex items-center justify-between p-4 bg-[#050a10]/95 backdrop-blur-md border-b border-cyan-500/20">
-        <div class="flex items-center gap-3" id="btn-menu">
-            <div class="p-2 bg-cyan-900/30 border border-cyan-500/50 rounded-lg text-[#00ffcc]">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-            </div>
-            <div class="flex flex-col">
-                <div class="text-[10px] text-cyan-400 font-black tracking-widest uppercase truncate max-w-[150px]" id="display-map-id">Select Map</div>
-                <div class="text-[8px] text-gray-500 font-bold mt-1 uppercase leading-none tracking-tighter">Strategic Hub</div>
-            </div>
-        </div>
-        <div class="flex gap-2">
-            <button id="btn-pause" class="p-2 border border-cyan-800 rounded-lg text-cyan-400">
-                <svg id="svg-stop" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
-                <svg id="svg-play" class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            </button>
-            <button id="btn-save" class="px-4 py-1 border border-cyan-800 rounded-lg text-[10px] font-bold uppercase">Cloud Save</button>
-        </div>
-    </header>
-
-    <div id="nav-area" class="absolute top-28 left-4 z-40 hidden">
-        <button id="btn-back" class="flex items-center gap-2 px-4 py-2 bg-orange-500/10 border border-orange-500 text-orange-500 rounded-xl font-black text-[10px] uppercase tracking-wider shadow-lg">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            <span id="back-label">Back</span>
-        </button>
-    </div>
-
     <main id="viz-area" class="relative flex-1 flex items-center justify-center overflow-hidden">
         <!-- Visualization nodes injected here -->
     </main>
 
     <footer class="relative z-50 p-6 pb-12 flex justify-between items-center bg-[#050a10]/95 border-t border-cyan-500/10">
-        <button id="btn-purge" class="text-red-500 font-black text-[10px] px-5 py-3 border border-red-900 rounded-xl uppercase tracking-widest">Purge</button>
+        <button id="btn-purge" class="text-red-500 font-black text-[11px] px-5 py-3 border border-red-900 rounded-xl uppercase tracking-widest active:bg-red-900/20 shadow-lg shadow-red-900/10">Reset</button>
         <button id="btn-add" class="w-16 h-16 bg-[#00ffcc] text-black rounded-full flex items-center justify-center shadow-[0_0_35px_rgba(0,255,204,0.6)] -mt-14 active:scale-90 transition-transform">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         </button>
-        <button id="btn-sync" class="text-cyan-400 font-black text-[10px] px-5 py-3 border border-cyan-900 rounded-xl uppercase tracking-widest">Cloud Sync</button>
+        <button id="btn-sync" class="text-cyan-400 font-black text-[11px] px-5 py-3 border border-cyan-900 rounded-xl uppercase tracking-widest active:bg-cyan-900/20 shadow-lg shadow-cyan-900/10">Cloud Sync</button>
     </footer>
 </div>
 
@@ -185,7 +196,7 @@
     /** --- CONFIGURATION --- **/
     const GAS_URL = "https://script.google.com/macros/s/AKfycbxpjj3BRsCRNzvnE8prKUi1GuGmyAVudSEeJmOTmziBA9hHWTCOoSZNfJEwDjduLbcdNQ/exec"; 
 
-    /** --- HINTS FOR 10X THINKING --- **/
+    /** --- HINTS --- **/
     const HINTS = [
         "10%の改善は「今の延長」だが、10倍の成長は「今の破壊」から始まる。",
         "不可能だと思える目標（ムーンショット）こそが、脳を既存の枠組みから解放する。",
@@ -206,7 +217,7 @@
         "既存の市場で戦うな。10倍の価値を提供できる「新しい市場」を自ら定義せよ。",
         "リーダーの役割は、部下に「10%の努力」を強いることではなく「10xの視点」を与えること。",
         "リソースを分散させるな。10xの可能性を持つ一点に、全戦力を集中投下せよ。",
-        "「今のやり方の延長」で2倍を狙うより、「全く違うやり方」で10倍を狙う方が実は易しい。",
+        "「今のやり方の延長」で2倍を狙うより、「全く違うやり方」で10倍を狙う方が易しい。",
         "成功の定義を「目標達成」から「システムの進化」に置き換える。",
         "10x思考とは、勇気ではなく「論理的な飛躍」を選択することである。",
         "今日のアクションが、50年後の10倍の成果に繋がっているかを常に問う。",
@@ -220,18 +231,18 @@
         "Objectives（目標）は、ワクワクするほど野心的で、心躍る言葉で定義する。",
         "Key Results（主な結果）は、誰が見ても明白な「数値」と「期限」で定量化する。",
         "OKRの達成率は「60〜70%」が理想。100%達成は目標が低すぎた証拠（バグ）である。",
-        "ムーンショット（10x）とコミットメント（必達）のOKRを明確に区別して運用する。",
-        "組織のOKRと個人のOKRを「連鎖（アライメント）」させ、ベクトルを一点に集中させる。",
+        "ムーンショット（10x）とコミットメント（必達）のOKRを区別して運用する。",
+        "組織のOKRと個人のOKRを「連鎖（アライメント）」させ、ベクトルを集中させる。",
         "戦略を絞り込め。OKRは「最優先事項」だけにフォーカスし、それ以外を捨てる。",
         "OKRは「評価制度（給与）」と切り離す。失敗を恐れず挑戦できる環境を作る。",
         "状況の変化に合わせ、四半期ごとにOKRを大胆にアップデート（デバッグ）する。",
         "チェックイン（定例進捗確認）を週次で行い、停滞のループを即座に検知する。",
-        "ウィン・セッション（成果の共有会）を設け、小さな前進をポジティブにフィードバックする。",
-        "スプレッドシートやツールでOKRを「完全公開」し、情報の透明性を担保する。",
+        "ウィン・セッションを設け、小さな前進をポジティブにフィードバックする。",
+        "ツールでOKRを「完全公開」し、組織内の情報の透明性を担保する。",
         "コンフィデンス・スコアを10段階で可視化し、早期にアラートを出す。",
         "OKRを日々のタスク（To-Do）の優先順位を決定するOSにする。",
-        "ボトルネックが発生しているKRにリソースを集中させ、システム全体の出力を上げる。",
-        "測定不能なKRは、KRではない。すべてをデータ（エビデンス）で語る文化を作る。",
+        "ボトルネックが発生しているKRにリソースを集中させ、システム出力を上げる。",
+        "測定不能なKRは、KRではない。すべてをデータ（エビデンス）で語る。",
         "失敗は「学習」である。未達のOKRから得たインサイトこそが、次期の資産になる。",
         "「これまでのやり方」では届かない目標を設定し、思考を10xへと飛躍させる。",
         "困難な目標に挑む自分を誇り、プロセスの中にある「成長」を最大化する。",
@@ -249,16 +260,8 @@
         "複利効果が効くような「仕組みの構築」をKRの柱に据え、長期的な富を設計する。"
     ];
 
-    /** --- INITIAL DATA (CLEAN START) --- **/
-    const initialData = {
-        "New Strategy": {
-            label: "Strategic Objective", value: "0", unit: "%",
-            children: []
-        }
-    };
-
     /** --- STATE --- **/
-    let allMaps = JSON.parse(localStorage.getItem('okr_v4_8_maps')) || initialData;
+    let allMaps = JSON.parse(localStorage.getItem('okr_v4_8_maps')) || { "New Strategy": { label: "Strategic Objective", value: "0", unit: "%", children: [] } };
     let currentMapId = localStorage.getItem('okr_v4_8_current_id') || Object.keys(allMaps)[0];
     let navigationPath = [];
     let isPaused = false;
@@ -277,119 +280,61 @@
     const hintTextEl = document.getElementById('hint-text');
     let modalAction = null;
 
-    /** --- TYPING ANIMATION LOGIC --- **/
+    /** --- TYPING --- **/
     let currentHintIndex = -1;
     function typeHint() {
         let nextIndex;
-        do {
-            nextIndex = Math.floor(Math.random() * HINTS.length);
-        } while (nextIndex === currentHintIndex);
+        do { nextIndex = Math.floor(Math.random() * HINTS.length); } while (nextIndex === currentHintIndex);
         currentHintIndex = nextIndex;
-        
         const text = HINTS[currentHintIndex];
         hintTextEl.innerText = "";
         let i = 0;
-        
         const interval = setInterval(() => {
-            if (i < text.length) {
-                hintTextEl.innerText += text.charAt(i);
-                i++;
-            } else {
-                clearInterval(interval);
-                setTimeout(typeHint, 8000); // Wait for 8 seconds
-            }
-        }, 120); // ★ 50msから120msに低速化。ニモさんの思考ペースに最適化。
+            if (i < text.length) { hintTextEl.innerText += text.charAt(i); i++; } 
+            else { clearInterval(interval); setTimeout(typeHint, 8000); }
+        }, 120);
     }
 
     /** --- HELPERS --- **/
     function getCurrentNode() {
         let node = allMaps[currentMapId];
         if(!node) return null;
-        for (let idx of navigationPath) {
-            if(node.children && node.children[idx]) node = node.children[idx];
-        }
+        for (let idx of navigationPath) { if(node.children && node.children[idx]) node = node.children[idx]; }
         return node;
     }
+    function showToast(msg) { toast.innerText = msg; toast.style.opacity = 1; setTimeout(() => toast.style.opacity = 0, 2000); }
+    function save() { localStorage.setItem('okr_v4_8_maps', JSON.stringify(allMaps)); localStorage.setItem('okr_v4_8_current_id', currentMapId); }
 
-    function showToast(msg) {
-        toast.innerText = msg; toast.style.opacity = 1;
-        setTimeout(() => toast.style.opacity = 0, 2000);
-    }
-
-    function save() {
-        localStorage.setItem('okr_v4_8_maps', JSON.stringify(allMaps));
-        localStorage.setItem('okr_v4_8_current_id', currentMapId);
-    }
-
-    /** --- GAS CLOUD SYNC --- **/
+    /** --- CLOUD --- **/
     async function gasSync(action) {
-        if(!GAS_URL) {
-            showToast("GAS URL NOT SET");
-            return;
-        }
-        
+        if(!GAS_URL) { showToast("GAS URL NOT SET"); return; }
         showToast(`${action.toUpperCase()}ING...`);
         try {
-            const payload = {
-                action: action,
-                data: {
-                    allMaps: allMaps,
-                    currentMapId: currentMapId
-                }
-            };
-            
-            const response = await fetch(GAS_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify(payload)
-            });
-            
+            const payload = { action: action, data: { allMaps: allMaps, currentMapId: currentMapId } };
+            const response = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
             if (action === 'load') {
                 const cloudData = await response.json();
-                if (cloudData && cloudData.allMaps) {
-                    allMaps = cloudData.allMaps;
-                    currentMapId = cloudData.currentMapId;
-                    save(); render();
-                }
+                if (cloudData && cloudData.allMaps) { allMaps = cloudData.allMaps; currentMapId = cloudData.currentMapId; save(); render(); }
             }
             showToast(`CLOUD ${action.toUpperCase()} SUCCESS`);
-        } catch (e) {
-            console.error(e);
-            showToast("CLOUD SYNC ERROR");
-        }
+        } catch (e) { showToast("CLOUD SYNC ERROR"); }
     }
 
-    /** --- MODAL SYSTEM --- **/
+    /** --- MODAL --- **/
     function openModal(type, options = {}) {
         document.getElementById('modal-title').innerText = options.title || 'Mission Control';
         document.getElementById('modal-desc').classList.add('hidden');
         document.getElementById('value-fields').classList.remove('hidden');
         document.getElementById('input-label').parentElement.classList.remove('hidden');
-
         if(type === 'edit' || type === 'add' || type === 'new_map') {
-            inputLabel.value = options.label || '';
-            inputValue.value = options.value || '0';
-            inputUnit.value = options.unit || '%';
+            inputLabel.value = options.label || ''; inputValue.value = options.value || '0'; inputUnit.value = options.unit || '%';
         } else if(type === 'confirm') {
-            document.getElementById('modal-desc').innerText = options.desc;
-            document.getElementById('modal-desc').classList.remove('hidden');
-            document.getElementById('value-fields').classList.add('hidden');
-            document.getElementById('input-label').parentElement.classList.add('hidden');
+            document.getElementById('modal-desc').innerText = options.desc; document.getElementById('modal-desc').classList.remove('hidden');
+            document.getElementById('value-fields').classList.add('hidden'); document.getElementById('input-label').parentElement.classList.add('hidden');
         }
-
-        modal.style.display = 'flex';
-        modalAction = options.onConfirm;
+        modal.style.display = 'flex'; modalAction = options.onConfirm;
     }
-
-    document.getElementById('modal-ok').onclick = () => {
-        if(modalAction) modalAction({
-            label: inputLabel.value,
-            value: inputValue.value,
-            unit: inputUnit.value
-        });
-        modal.style.display = 'none';
-        save(); render();
-    };
+    document.getElementById('modal-ok').onclick = () => { if(modalAction) modalAction({ label: inputLabel.value, value: inputValue.value, unit: inputUnit.value }); modal.style.display = 'none'; save(); render(); };
     document.getElementById('modal-cancel').onclick = () => modal.style.display = 'none';
 
     /** --- RENDER --- **/
@@ -397,18 +342,14 @@
         vizArea.innerHTML = '';
         const node = getCurrentNode();
         if(!node) return;
-
         document.getElementById('display-map-id').innerText = currentMapId;
-
         const navArea = document.getElementById('nav-area');
         if(navigationPath.length > 0) {
             navArea.classList.remove('hidden');
             let parent = allMaps[currentMapId];
             for(let i=0; i<navigationPath.length-1; i++) parent = parent.children[navigationPath[i]];
             document.getElementById('back-label').innerText = parent.label;
-        } else {
-            navArea.classList.add('hidden');
-        }
+        } else { navArea.classList.add('hidden'); }
 
         const center = document.createElement('div');
         center.className = 'center-node';
@@ -419,48 +360,24 @@
                 <span class="text-xs">✎</span>
             </div>
         `;
-        center.querySelector('#center-edit-btn').onclick = (e) => {
-            e.stopPropagation();
-            openModal('edit', {
-                title: 'Update Center Node',
-                label: node.label, value: node.value, unit: node.unit,
-                onConfirm: (res) => { node.label = res.label; node.value = res.value; node.unit = res.unit; }
-            });
-        };
+        center.querySelector('#center-edit-btn').onclick = (e) => { e.stopPropagation(); openModal('edit', { title: 'Update Center Node', label: node.label, value: node.value, unit: node.unit, onConfirm: (res) => { node.label = res.label; node.value = res.value; node.unit = res.unit; } }); };
         vizArea.appendChild(center);
 
         if(node.children) {
             node.children.forEach((child, i) => {
                 const childEl = document.createElement('div');
-                childEl.className = 'node';
-                childEl.id = `node-${i}`;
+                childEl.className = 'node'; childEl.id = `node-${i}`;
                 childEl.innerHTML = `
                     <div class="text-[10px] font-black text-white uppercase tracking-tighter truncate w-full">${child.label}</div>
                     <div class="text-[10px] text-cyan-400 font-black mt-1">${child.value}${child.unit}</div>
                     <div class="absolute -top-3 -right-2 flex gap-1 z-50">
-                        <div class="edit-btn w-8 h-8 bg-black border border-cyan-500 rounded-full flex items-center justify-center text-cyan-400 shadow-xl">✎</div>
-                        <div class="del-btn w-8 h-8 bg-black border border-red-500 rounded-full flex items-center justify-center text-red-500 shadow-xl">✕</div>
+                        <div class="edit-btn w-8 h-8 bg-black border border-cyan-500 rounded-full flex items-center justify-center text-cyan-400 shadow-xl active:bg-cyan-900 transition-colors">✎</div>
+                        <div class="del-btn w-8 h-8 bg-black border border-red-500 rounded-full flex items-center justify-center text-red-500 shadow-xl active:bg-red-900 transition-colors">✕</div>
                     </div>
                 `;
-                childEl.onclick = (e) => {
-                    if(e.target.closest('.edit-btn') || e.target.closest('.del-btn')) return;
-                    navigationPath.push(i); angle = 0; render();
-                };
-                childEl.querySelector('.edit-btn').onclick = (e) => {
-                    e.stopPropagation();
-                    openModal('edit', {
-                        title: 'Edit Mission',
-                        label: child.label, value: child.value, unit: child.unit,
-                        onConfirm: (res) => { child.label = res.label; child.value = res.value; child.unit = res.unit; }
-                    });
-                };
-                childEl.querySelector('.del-btn').onclick = (e) => {
-                    e.stopPropagation();
-                    openModal('confirm', {
-                        title: 'Delete Node', desc: `REMOVE "${child.label}"?`,
-                        onConfirm: () => { node.children.splice(i, 1); showToast("REMOVED"); }
-                    });
-                };
+                childEl.onclick = (e) => { if(e.target.closest('.edit-btn') || e.target.closest('.del-btn')) return; navigationPath.push(i); angle = 0; render(); };
+                childEl.querySelector('.edit-btn').onclick = (e) => { e.stopPropagation(); openModal('edit', { title: 'Edit Mission', label: child.label, value: child.value, unit: child.unit, onConfirm: (res) => { child.label = res.label; child.value = res.value; child.unit = res.unit; } }); };
+                childEl.querySelector('.del-btn').onclick = (e) => { e.stopPropagation(); openModal('confirm', { title: 'Delete Node', desc: `REMOVE "${child.label}"?`, onConfirm: () => { node.children.splice(i, 1); showToast("REMOVED"); } }); };
                 vizArea.appendChild(childEl);
             });
         }
@@ -468,36 +385,20 @@
     }
 
     function renderSidebar() {
-        const list = document.getElementById('map-list');
-        list.innerHTML = '';
+        const list = document.getElementById('map-list'); list.innerHTML = '';
         Object.keys(allMaps).forEach(id => {
             const item = document.createElement('div');
             item.className = `flex justify-between items-center p-4 rounded-xl border mb-2 transition-all active:scale-95 ${id === currentMapId ? 'border-cyan-400 bg-cyan-500/10' : 'border-white/5 bg-white/5'}`;
-            item.innerHTML = `<span class="text-xs font-black uppercase truncate pr-2">${id}</span><button class="text-red-500 text-[10px] font-black border border-red-900 px-2 py-1 rounded">DEL</button>`;
+            item.innerHTML = `<span class="text-xs font-black uppercase truncate pr-2 tracking-tight">${id}</span><button class="text-red-500 text-[10px] font-black border border-red-900 px-2 py-1 rounded">DEL</button>`;
             item.onclick = (e) => {
-                if(e.target.tagName === 'BUTTON') {
-                    openModal('confirm', {
-                        title: 'Delete Map', desc: `DELETE PROJECT "${id}"?`,
-                        onConfirm: () => {
-                            delete allMaps[id];
-                            if(currentMapId === id) {
-                                currentMapId = Object.keys(allMaps)[0] || 'Default';
-                                if(!allMaps[currentMapId]) allMaps[currentMapId] = initialData["New Strategy"];
-                            }
-                            navigationPath = [];
-                        }
-                    });
-                    return;
-                }
-                currentMapId = id; navigationPath = []; render();
-                document.getElementById('sidebar').classList.remove('open');
-                document.getElementById('overlay').classList.remove('show');
+                if(e.target.tagName === 'BUTTON') { openModal('confirm', { title: 'Delete Map', desc: `DELETE PROJECT "${id}"?`, onConfirm: () => { delete allMaps[id]; if(currentMapId === id) { currentMapId = Object.keys(allMaps)[0] || 'Default'; if(!allMaps[currentMapId]) allMaps[currentMapId] = initialData["New Strategy"]; } navigationPath = []; } }); return; }
+                currentMapId = id; navigationPath = []; render(); document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show');
             };
             list.appendChild(item);
         });
     }
 
-    /** --- ANIMATION --- **/
+    /** --- LOOP --- **/
     function animate() {
         if(!isPaused) angle += rotationSpeed;
         const node = getCurrentNode();
@@ -506,92 +407,32 @@
                 const el = document.getElementById(`node-${i}`);
                 if(!el) return;
                 const itemAngle = angle + (i / node.children.length) * Math.PI * 2;
-                const x = Math.cos(itemAngle) * radius;
-                const y = Math.sin(itemAngle) * radius;
-                const depth = Math.sin(itemAngle);
+                const x = Math.cos(itemAngle) * radius; const y = Math.sin(itemAngle) * radius; const depth = Math.sin(itemAngle);
                 el.style.transform = `translate(${x}px, ${y}px) scale(${0.85 + (depth + 1) * 0.12})`;
-                el.style.zIndex = Math.round((depth + 1) * 10);
-                el.style.opacity = 0.6 + (depth + 1) / 2.5;
+                el.style.zIndex = Math.round((depth + 1) * 10); el.style.opacity = 0.6 + (depth + 1) / 2.5;
             });
         }
         requestAnimationFrame(animate);
     }
 
-    /** --- EVENTS --- **/
-    document.getElementById('btn-menu').onclick = () => {
-        document.getElementById('sidebar').classList.add('open');
-        document.getElementById('overlay').classList.add('show');
-    };
-    document.getElementById('overlay').onclick = document.getElementById('close-sidebar').onclick = () => {
-        document.getElementById('sidebar').classList.remove('open');
-        document.getElementById('overlay').classList.remove('show');
-    };
-    document.getElementById('btn-pause').onclick = () => {
-        isPaused = !isPaused;
-        document.getElementById('svg-stop').classList.toggle('hidden', isPaused);
-        document.getElementById('svg-play').classList.toggle('hidden', !isPaused);
-    };
-    
+    /** --- BUTTONS --- **/
+    document.getElementById('btn-menu').onclick = () => { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('show'); };
+    document.getElementById('overlay').onclick = document.getElementById('close-sidebar').onclick = () => { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); };
+    document.getElementById('btn-pause').onclick = () => { isPaused = !isPaused; document.getElementById('svg-stop').classList.toggle('hidden', isPaused); document.getElementById('svg-play').classList.toggle('hidden', !isPaused); };
     document.getElementById('btn-save').onclick = () => gasSync('save');
     document.getElementById('btn-back').onclick = () => { navigationPath.pop(); render(); };
-    document.getElementById('btn-purge').onclick = () => {
-        const node = getCurrentNode();
-        openModal('confirm', {
-            title: 'Purge Action', desc: 'DELETE ALL CHILDREN IN THIS LEVEL?',
-            onConfirm: () => { node.children = []; showToast("PURGED"); }
-        });
-    };
-    document.getElementById('btn-add').onclick = () => {
-        const node = getCurrentNode();
-        openModal('add', {
-            title: 'New Mission', unit: node.unit || '%',
-            onConfirm: (res) => {
-                if(!node.children) node.children = [];
-                node.children.push({ label: res.label, value: res.value, unit: res.unit, children: [] });
-            }
-        });
-    };
-    document.getElementById('new-map-btn').onclick = () => {
-        openModal('new_map', {
-            title: 'Initialize Map', label: 'New Project', value: '0', unit: '%',
-            onConfirm: (res) => {
-                allMaps[res.label] = { label: res.label, value: res.value, unit: res.unit, children: [] };
-                currentMapId = res.label; navigationPath = [];
-                document.getElementById('sidebar').classList.remove('open');
-                document.getElementById('overlay').classList.remove('show');
-            }
-        });
-    };
-
+    document.getElementById('btn-purge').onclick = () => { const node = getCurrentNode(); openModal('confirm', { title: 'Reset Action', desc: 'DELETE ALL CHILDREN IN THIS LEVEL?', onConfirm: () => { node.children = []; showToast("RESET SUCCESS"); } }); };
+    document.getElementById('btn-add').onclick = () => { const node = getCurrentNode(); openModal('add', { title: 'New Mission', unit: node.unit || '%', onConfirm: (res) => { if(!node.children) node.children = []; node.children.push({ label: res.label, value: res.value, unit: res.unit, children: [] }); } }); };
+    document.getElementById('new-map-btn').onclick = () => { openModal('new_map', { title: 'Initialize Map', label: 'New Project', value: '0', unit: '%', onConfirm: (res) => { allMaps[res.label] = { label: res.label, value: res.value, unit: res.unit, children: [] }; currentMapId = res.label; navigationPath = []; document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); } }); };
     document.getElementById('btn-sync').onclick = () => gasSync('load');
 
-    /** --- DRAG SUPPORT --- **/
+    /** --- DRAG --- **/
     let sX = 0, isD = false;
-    vizArea.addEventListener('touchstart', (e) => {
-        if(e.target.closest('.node') || e.target.closest('button')) return;
-        isD = true; sX = e.touches[0].clientX;
-    });
-    window.addEventListener('touchmove', (e) => {
-        if(!isD) return;
-        const delta = e.touches[0].clientX - sX;
-        angle += delta * 0.005; sX = e.touches[0].clientX;
-    });
-    window.addEventListener('touchend', () => {
-        isD = false;
-        const decelerate = setInterval(() => {
-            if (Math.abs(rotationSpeed - DEFAULT_SPEED) < 0.0001) {
-                rotationSpeed = DEFAULT_SPEED;
-                clearInterval(decelerate);
-            } else {
-                rotationSpeed += (DEFAULT_SPEED - rotationSpeed) * 0.1;
-            }
-        }, 30);
-    });
+    vizArea.addEventListener('touchstart', (e) => { if(e.target.closest('.node') || e.target.closest('button')) return; isD = true; sX = e.touches[0].clientX; });
+    window.addEventListener('touchmove', (e) => { if(!isD) return; const delta = e.touches[0].clientX - sX; angle += delta * 0.005; sX = e.touches[0].clientX; });
+    window.addEventListener('touchend', () => { isD = false; const decelerate = setInterval(() => { if (Math.abs(rotationSpeed - DEFAULT_SPEED) < 0.0001) { rotationSpeed = DEFAULT_SPEED; clearInterval(decelerate); } else { rotationSpeed += (DEFAULT_SPEED - rotationSpeed) * 0.1; } }, 30); });
 
-    // Start everything
-    render();
-    animate();
-    typeHint();
+    render(); animate(); typeHint();
 </script>
 </body>
 </html>
