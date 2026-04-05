@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OKR Strategic Dash | Pro Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --neon-green: #00ffcc;
+            --bg-dark: #050a10;
+            --warning-amber: #ffaa00;
+            --node-bg: rgba(5, 35, 35, 0.95);
+            --panel-bg: rgba(5, 10, 15, 0.98);
+        }
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden; margin: 0; height: 100vh; width: 100vw; touch-action: none;
+            user-select: none;
+        }
+        #app-container {
+            position: relative; width: 100%; height: 100%; display: flex; flex-direction: column;
+            background: radial-gradient(circle at center, #0a2020 0%, #050a10 100%);
+        }
+        .grid-bg {
+            position: absolute; inset: 0; opacity: 0.1; pointer-events: none;
+            background-image: linear-gradient(var(--neon-green) 1px, transparent 1px), linear-gradient(90deg, var(--neon-green) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        /* Sidebar */
+        #sidebar {
+            position: fixed; top: 0; left: -100%; width: 85%; max-width: 320px; height: 100%;
+            background: var(--panel-bg); z-index: 500; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            border-right: 1px solid var(--neon-green); padding: 20px; display: flex; flex-direction: column;
+            box-shadow: 20px 0 50px rgba(0,0,0,0.8);
+        }
+        #sidebar.open { transform: translateX(100%); }
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7);
+            display: none; z-index: 400; backdrop-filter: blur(3px);
+        }
+        .overlay.show { display: block; }
+        /* Nodes */
+        .center-node {
+            position: absolute; width: 170px; min-height: 90px; z-index: 50; padding: 15px;
+            background: linear-gradient(145deg, #004d40, #001a1a);
+            border: 2px solid var(--neon-green); border-radius: 40px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+            box-shadow: 0 0 50px rgba(0, 255, 204, 0.4);
+        }
+        .node {
+            position: absolute; min-width: 120px; padding: 14px 18px; z-index: 10;
+            background: var(--node-bg); border: 1px solid rgba(0, 255, 204, 0.5);
+            border-radius: 20px; display: flex; flex-direction: column; align-items: center; text-align: center;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.6); transition: opacity 0.3s;
+        }
+        /* Custom Modal */
+        #modal-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); display: none; z-index: 3000;
+            justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(8px);
+        }
+        #modal-box {
+            background: #0f1a1a; border: 1px solid var(--neon-green);
+            width: 100%; max-width: 320px; border-radius: 35px; padding: 28px;
+            box-shadow: 0 0 60px rgba(0, 255, 204, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <div class="grid-bg"></div>
+    <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 z-[4000] bg-[#00ffcc] text-black px-4 py-2 rounded-full font-bold text-xs opacity-0 transition-opacity duration-300 pointer-events-none">SUCCESS</div>
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Sidebar -->
+    <div id="sidebar">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-xl font-black text-cyan-400 tracking-tighter uppercase">Strategy Cloud</h2>
+            <button id="close-sidebar" class="text-gray-500 p-2">✕</button>
+        </div>
+        <div class="flex-1 overflow-y-auto pr-1" id="map-list"></div>
+        <button class="w-full py-4 bg-cyan-500 text-black rounded-2xl mt-4 text-sm font-black uppercase tracking-widest shadow-lg active:scale-95 transition-transform" id="new-map-btn">
+            + New Project
+        </button>
+    </div>
+
+    <!-- Custom Modal -->
+    <div id="modal-container">
+        <div id="modal-box">
+            <h3 id="modal-title" class="text-cyan-400 font-black text-lg mb-6 uppercase tracking-tighter">Edit Node</h3>
+            <div id="modal-content" class="space-y-5 mb-8">
+                <div>
+                    <label class="text-[9px] text-gray-500 font-black uppercase tracking-widest ml-1 mb-1 block">Label</label>
+                    <input type="text" id="input-label" class="w-full bg-black border border-cyan-900 rounded-xl p-4 text-white focus:border-cyan-400 outline-none text-sm font-bold">
+                </div>
+                <div id="value-fields" class="flex gap-4">
+                    <div class="flex-1">
+                        <label class="text-[9px] text-gray-500 font-black uppercase tracking-widest ml-1 mb-1 block">Value</label>
+                        <input type="text" id="input-value" class="w-full bg-black border border-cyan-900 rounded-xl p-4 text-white focus:border-cyan-400 outline-none text-sm font-bold">
+                    </div>
+                    <div class="w-24">
+                        <label class="text-[9px] text-gray-500 font-black uppercase tracking-widest ml-1 mb-1 block">Unit</label>
+                        <select id="input-unit" class="w-full h-[52px] bg-black border border-cyan-900 rounded-xl px-2 text-cyan-400 outline-none appearance-none text-center font-black text-sm">
+                            <option value="%">%</option>
+                            <option value="M$">M$</option>
+                            <option value="社">社</option>
+                            <option value="件">件</option>
+                            <option value="">None</option>
+                        </select>
+                    </div>
+                </div>
+                <p id="modal-desc" class="text-gray-400 text-sm hidden"></p>
+            </div>
+            <div class="flex gap-3">
+                <button id="modal-cancel" class="flex-1 py-4 border border-red-900 text-red-500 rounded-2xl font-black text-[11px] uppercase tracking-widest active:bg-red-900/20">Abort</button>
+                <button id="modal-ok" class="flex-1 py-4 bg-cyan-500 text-black rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-lg active:scale-95">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="relative z-50 flex items-center justify-between p-4 bg-[#050a10]/95 backdrop-blur-md border-b border-cyan-500/20">
+        <div class="flex items-center gap-3" id="btn-menu">
+            <div class="p-2 bg-cyan-900/30 border border-cyan-500/50 rounded-lg text-[#00ffcc]">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </div>
+            <div class="flex flex-col">
+                <div class="text-[10px] text-cyan-400 font-black tracking-widest uppercase truncate max-w-[150px]" id="display-map-id">Select Map</div>
+                <div class="text-[8px] text-gray-500 font-bold mt-1 uppercase leading-none tracking-tighter">Strategic Hub</div>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <button id="btn-pause" class="p-2 border border-cyan-800 rounded-lg text-cyan-400">
+                <svg id="svg-stop" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                <svg id="svg-play" class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </button>
+            <button id="btn-save" class="px-4 py-1 border border-cyan-800 rounded-lg text-[10px] font-bold uppercase">Save</button>
+        </div>
+    </header>
+
+    <div id="nav-area" class="absolute top-24 left-4 z-40 hidden">
+        <button id="btn-back" class="flex items-center gap-2 px-4 py-2 bg-orange-500/10 border border-orange-500 text-orange-500 rounded-xl font-black text-[10px] uppercase tracking-wider shadow-lg">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span id="back-label">Back</span>
+        </button>
+    </div>
+
+    <main id="viz-area" class="relative flex-1 flex items-center justify-center overflow-hidden">
+        <!-- Visualization nodes injected here -->
+    </main>
+
+    <footer class="relative z-50 p-6 pb-12 flex justify-between items-center bg-[#050a10]/95 border-t border-cyan-500/10">
+        <button id="btn-purge" class="text-red-500 font-black text-[10px] px-5 py-3 border border-red-900 rounded-xl uppercase tracking-widest">Purge</button>
+        <button id="btn-add" class="w-16 h-16 bg-[#00ffcc] text-black rounded-full flex items-center justify-center shadow-[0_0_35px_rgba(0,255,204,0.6)] -mt-14 active:scale-90 transition-transform">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+        <button id="btn-sync" class="text-cyan-400 font-black text-[10px] px-5 py-3 border border-cyan-900 rounded-xl uppercase tracking-widest">Sync</button>
+    </footer>
+</div>
+
+<script>
+    /** --- INITIAL DATA --- **/
+    const initialData = {
+        "Strategic Plan Q2": {
+            label: "Q2 売上目標達成", value: "72", unit: "%",
+            children: [
+                { label: "新規顧客獲得", value: "85", unit: "%", children: [] },
+                { label: "既存顧客深掘り", value: "1.2", unit: "M$", children: [] }
+            ]
+        }
+    };
+
+    /** --- STATE --- **/
+    let allMaps = JSON.parse(localStorage.getItem('okr_v4_8_maps')) || initialData;
+    let currentMapId = localStorage.getItem('okr_v4_8_current_id') || Object.keys(allMaps)[0];
+    let navigationPath = []; // Array of indices
+    let isPaused = false;
+    let angle = 0;
+    const DEFAULT_SPEED = 0.001; // 速度を0.003から0.001に低減
+    let rotationSpeed = DEFAULT_SPEED;
+    const radius = 135;
+
+    /** --- ELEMENTS --- **/
+    const vizArea = document.getElementById('viz-area');
+    const modal = document.getElementById('modal-container');
+    const inputLabel = document.getElementById('input-label');
+    const inputValue = document.getElementById('input-value');
+    const inputUnit = document.getElementById('input-unit');
+    const toast = document.getElementById('toast');
+    let modalAction = null;
+
+    /** --- HELPERS --- **/
+    function getCurrentNode() {
+        let node = allMaps[currentMapId];
+        if(!node) return null;
+        for (let idx of navigationPath) {
+            if(node.children && node.children[idx]) node = node.children[idx];
+        }
+        return node;
+    }
+
+    function showToast(msg) {
+        toast.innerText = msg; toast.style.opacity = 1;
+        setTimeout(() => toast.style.opacity = 0, 2000);
+    }
+
+    function save() {
+        localStorage.setItem('okr_v4_8_maps', JSON.stringify(allMaps));
+        localStorage.setItem('okr_v4_8_current_id', currentMapId);
+    }
+
+    /** --- MODAL SYSTEM --- **/
+    function openModal(type, options = {}) {
+        document.getElementById('modal-title').innerText = options.title || 'Mission Control';
+        document.getElementById('modal-desc').classList.add('hidden');
+        document.getElementById('value-fields').classList.remove('hidden');
+        document.getElementById('input-label').parentElement.classList.remove('hidden');
+
+        if(type === 'edit' || type === 'add' || type === 'new_map') {
+            inputLabel.value = options.label || '';
+            inputValue.value = options.value || '0';
+            inputUnit.value = options.unit || '%';
+        } else if(type === 'confirm') {
+            document.getElementById('modal-desc').innerText = options.desc;
+            document.getElementById('modal-desc').classList.remove('hidden');
+            document.getElementById('value-fields').classList.add('hidden');
+            document.getElementById('input-label').parentElement.classList.add('hidden');
+        }
+
+        modal.style.display = 'flex';
+        modalAction = options.onConfirm;
+    }
+
+    document.getElementById('modal-ok').onclick = () => {
+        if(modalAction) modalAction({
+            label: inputLabel.value,
+            value: inputValue.value,
+            unit: inputUnit.value
+        });
+        modal.style.display = 'none';
+        save(); render();
+    };
+    document.getElementById('modal-cancel').onclick = () => modal.style.display = 'none';
+
+    /** --- RENDER --- **/
+    function render() {
+        vizArea.innerHTML = '';
+        const node = getCurrentNode();
+        if(!node) return;
+
+        document.getElementById('display-map-id').innerText = currentMapId;
+
+        // Breadcrumb
+        const navArea = document.getElementById('nav-area');
+        if(navigationPath.length > 0) {
+            navArea.classList.remove('hidden');
+            // Find parent label
+            let parent = allMaps[currentMapId];
+            for(let i=0; i<navigationPath.length-1; i++) parent = parent.children[navigationPath[i]];
+            document.getElementById('back-label').innerText = parent.label;
+        } else {
+            navArea.classList.add('hidden');
+        }
+
+        // Center Node
+        const center = document.createElement('div');
+        center.className = 'center-node';
+        center.innerHTML = `
+            <div class="text-[14px] font-black uppercase tracking-tight px-1">${node.label}</div>
+            <div class="text-[12px] text-cyan-400 font-black mt-2 tracking-widest">${node.value}${node.unit}</div>
+            <div id="center-edit-btn" class="absolute -top-3 -right-3 w-10 h-10 bg-black border-2 border-cyan-500 rounded-full flex items-center justify-center text-cyan-400 shadow-xl active:scale-90 transition-transform">
+                <span class="text-xs">✎</span>
+            </div>
+        `;
+        center.querySelector('#center-edit-btn').onclick = (e) => {
+            e.stopPropagation();
+            openModal('edit', {
+                title: 'Update Center Node',
+                label: node.label, value: node.value, unit: node.unit,
+                onConfirm: (res) => { node.label = res.label; node.value = res.value; node.unit = res.unit; }
+            });
+        };
+        vizArea.appendChild(center);
+
+        // Child Nodes
+        if(node.children) {
+            node.children.forEach((child, i) => {
+                const childEl = document.createElement('div');
+                childEl.className = 'node';
+                childEl.id = `node-${i}`;
+                childEl.innerHTML = `
+                    <div class="text-[10px] font-black text-white uppercase tracking-tighter truncate w-full">${child.label}</div>
+                    <div class="text-[10px] text-cyan-400 font-black mt-1">${child.value}${child.unit}</div>
+                    <div class="absolute -top-3 -right-2 flex gap-1 z-50">
+                        <div class="edit-btn w-8 h-8 bg-black border border-cyan-500 rounded-full flex items-center justify-center text-cyan-400 shadow-xl">✎</div>
+                        <div class="del-btn w-8 h-8 bg-black border border-red-500 rounded-full flex items-center justify-center text-red-500 shadow-xl">✕</div>
+                    </div>
+                `;
+                childEl.onclick = (e) => {
+                    if(e.target.closest('.edit-btn') || e.target.closest('.del-btn')) return;
+                    navigationPath.push(i); angle = 0; render();
+                };
+                childEl.querySelector('.edit-btn').onclick = (e) => {
+                    e.stopPropagation();
+                    openModal('edit', {
+                        title: 'Edit Mission',
+                        label: child.label, value: child.value, unit: child.unit,
+                        onConfirm: (res) => { child.label = res.label; child.value = res.value; child.unit = res.unit; }
+                    });
+                };
+                childEl.querySelector('.del-btn').onclick = (e) => {
+                    e.stopPropagation();
+                    openModal('confirm', {
+                        title: 'Delete Node', desc: `REMOVE "${child.label}"?`,
+                        onConfirm: () => { node.children.splice(i, 1); showToast("REMOVED"); }
+                    });
+                };
+                vizArea.appendChild(childEl);
+            });
+        }
+        renderSidebar();
+    }
+
+    function renderSidebar() {
+        const list = document.getElementById('map-list');
+        list.innerHTML = '';
+        Object.keys(allMaps).forEach(id => {
+            const item = document.createElement('div');
+            item.className = `flex justify-between items-center p-4 rounded-xl border mb-2 transition-all active:scale-95 ${id === currentMapId ? 'border-cyan-400 bg-cyan-500/10' : 'border-white/5 bg-white/5'}`;
+            item.innerHTML = `<span class="text-xs font-black uppercase truncate pr-2">${id}</span><button class="text-red-500 text-[10px] font-black border border-red-900 px-2 py-1 rounded">DEL</button>`;
+            item.onclick = (e) => {
+                if(e.target.tagName === 'BUTTON') {
+                    openModal('confirm', {
+                        title: 'Delete Map', desc: `DELETE PROJECT "${id}"?`,
+                        onConfirm: () => {
+                            delete allMaps[id];
+                            if(currentMapId === id) {
+                                currentMapId = Object.keys(allMaps)[0] || 'Default';
+                                if(!allMaps[currentMapId]) allMaps[currentMapId] = initialData["Strategic Plan Q2"];
+                            }
+                            navigationPath = [];
+                        }
+                    });
+                    return;
+                }
+                currentMapId = id; navigationPath = []; render();
+                document.getElementById('sidebar').classList.remove('open');
+                document.getElementById('overlay').classList.remove('show');
+            };
+            list.appendChild(item);
+        });
+    }
+
+    /** --- ANIMATION --- **/
+    function animate() {
+        if(!isPaused) angle += rotationSpeed;
+        const node = getCurrentNode();
+        if(node && node.children) {
+            node.children.forEach((_, i) => {
+                const el = document.getElementById(`node-${i}`);
+                if(!el) return;
+                const itemAngle = angle + (i / node.children.length) * Math.PI * 2;
+                const x = Math.cos(itemAngle) * radius;
+                const y = Math.sin(itemAngle) * radius;
+                const depth = Math.sin(itemAngle);
+                el.style.transform = `translate(${x}px, ${y}px) scale(${0.85 + (depth + 1) * 0.12})`;
+                el.style.zIndex = Math.round((depth + 1) * 10);
+                el.style.opacity = 0.6 + (depth + 1) / 2.5;
+            });
+        }
+        requestAnimationFrame(animate);
+    }
+
+    /** --- EVENTS --- **/
+    document.getElementById('btn-menu').onclick = () => {
+        document.getElementById('sidebar').classList.add('open');
+        document.getElementById('overlay').classList.add('show');
+    };
+    document.getElementById('overlay').onclick = document.getElementById('close-sidebar').onclick = () => {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('show');
+    };
+    document.getElementById('btn-pause').onclick = () => {
+        isPaused = !isPaused;
+        document.getElementById('svg-stop').classList.toggle('hidden', isPaused);
+        document.getElementById('svg-play').classList.toggle('hidden', !isPaused);
+    };
+    document.getElementById('btn-save').onclick = () => { save(); showToast("LOCALLY SAVED"); };
+    document.getElementById('btn-back').onclick = () => { navigationPath.pop(); render(); };
+    document.getElementById('btn-purge').onclick = () => {
+        const node = getCurrentNode();
+        openModal('confirm', {
+            title: 'Purge Action', desc: 'DELETE ALL CHILDREN IN THIS LEVEL?',
+            onConfirm: () => { node.children = []; showToast("PURGED"); }
+        });
+    };
+    document.getElementById('btn-add').onclick = () => {
+        const node = getCurrentNode();
+        openModal('add', {
+            title: 'New Mission', unit: node.unit || '%',
+            onConfirm: (res) => {
+                if(!node.children) node.children = [];
+                node.children.push({ label: res.label, value: res.value, unit: res.unit, children: [] });
+            }
+        });
+    };
+    document.getElementById('new-map-btn').onclick = () => {
+        openModal('new_map', {
+            title: 'Initialize Map', label: 'New Project', value: '0', unit: '%',
+            onConfirm: (res) => {
+                allMaps[res.label] = { label: res.label, value: res.value, unit: res.unit, children: [] };
+                currentMapId = res.label; navigationPath = [];
+                document.getElementById('sidebar').classList.remove('open');
+                document.getElementById('overlay').classList.remove('show');
+            }
+        });
+    };
+
+    /** --- DRAG SUPPORT --- **/
+    let startX = 0, isDragging = false;
+    vizArea.addEventListener('touchstart', (e) => {
+        if(e.target.closest('.node') || e.target.closest('button')) return;
+        isDragging = true; startX = e.touches[0].clientX;
+    });
+    window.addEventListener('touchmove', (e) => {
+        if(!isDragging) return;
+        const delta = e.touches[0].clientX - startX;
+        angle += delta * 0.005; startX = e.touches[0].clientX;
+    });
+    window.addEventListener('touchend', () => {
+        isDragging = false;
+        // ドラッグ後にデフォルト速度に戻る際の平滑化
+        const decelerate = setInterval(() => {
+            if (Math.abs(rotationSpeed - DEFAULT_SPEED) < 0.0001) {
+                rotationSpeed = DEFAULT_SPEED;
+                clearInterval(decelerate);
+            } else {
+                rotationSpeed += (DEFAULT_SPEED - rotationSpeed) * 0.1;
+            }
+        }, 30);
+    });
+
+    // Initial load
+    render();
+    animate();
+</script>
+</body>
+</html>
