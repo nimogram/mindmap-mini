@@ -7,9 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
-            /* メインカラー：ネオングリーンに回帰 */
             --neon-green: #00ffcc; 
-            /* アクセントカラー：ライムグリーン（戻るボタン用） */
             --lime-green: #a3e635;
             --bg-dark: #050a10;
             --warning-amber: #ffaa00;
@@ -61,14 +59,14 @@
         .overlay.show { display: block; }
         /* Nodes */
         .center-node {
-            position: absolute; width: 170px; min-height: 95px; z-index: 50; padding: 15px;
+            position: absolute; width: 180px; min-height: 100px; z-index: 50; padding: 15px;
             background: linear-gradient(145deg, #004d40, #001a1a);
             border: 2px solid var(--neon-green); border-radius: 40px;
             display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
             box-shadow: 0 0 50px rgba(0, 255, 204, 0.4);
         }
         .node {
-            position: absolute; min-width: 125px; padding: 14px 18px; z-index: 10;
+            position: absolute; min-width: 130px; padding: 16px 20px; z-index: 10;
             background: var(--node-bg); border: 1px solid rgba(0, 255, 204, 0.5);
             border-radius: 20px; display: flex; flex-direction: column; align-items: center; text-align: center;
             box-shadow: 0 8px 25px rgba(0,0,0,0.6); transition: opacity 0.3s;
@@ -84,7 +82,6 @@
             width: 100%; max-width: 320px; border-radius: 35px; padding: 28px;
             box-shadow: 0 0 60px rgba(0, 255, 204, 0.3);
         }
-        /* Back Button - ライムグリーン専用指定 */
         #btn-back {
             background: rgba(163, 230, 53, 0.15); 
             border: 1px solid var(--lime-green); 
@@ -97,7 +94,6 @@
 <div id="app-container">
     <div class="grid-bg"></div>
 
-    <!-- Header (最上部) -->
     <header class="relative z-50 flex items-center justify-between p-4 bg-[#050a10]/95 backdrop-blur-md border-b border-cyan-500/20">
         <div class="flex items-center gap-3" id="btn-menu">
             <div class="p-2 bg-cyan-900/30 border border-cyan-500/50 rounded-lg text-[#00ffcc] active:scale-90 transition-transform">
@@ -117,12 +113,10 @@
         </div>
     </header>
 
-    <!-- Ticker (メニューの下) -->
     <div id="hint-ticker">
         <span id="hint-text">LOADING 10X INSIGHTS...</span>
     </div>
 
-    <!-- Back Button Area (ライムグリーン適用) -->
     <div id="nav-area" class="relative z-40 hidden px-4 pt-4">
         <button id="btn-back" class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-[11px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -133,7 +127,6 @@
     <div id="toast" class="fixed top-32 left-1/2 -translate-x-1/2 z-[4000] bg-[#00ffcc] text-black px-4 py-2 rounded-full font-bold text-[10px] opacity-0 transition-opacity duration-300 pointer-events-none shadow-lg">SUCCESS</div>
     <div class="overlay" id="overlay"></div>
 
-    <!-- Sidebar -->
     <div id="sidebar">
         <div class="flex justify-between items-center mb-8">
             <h2 class="text-xl font-black text-cyan-400 tracking-tighter uppercase">Strategy Cloud</h2>
@@ -145,7 +138,6 @@
         </button>
     </div>
 
-    <!-- Custom Modal -->
     <div id="modal-container">
         <div id="modal-box">
             <h3 id="modal-title" class="text-cyan-400 font-black text-lg mb-6 uppercase tracking-tighter">Edit Node</h3>
@@ -180,7 +172,6 @@
     </div>
 
     <main id="viz-area" class="relative flex-1 flex items-center justify-center overflow-hidden">
-        <!-- Visualization nodes injected here -->
     </main>
 
     <footer class="relative z-50 p-6 pb-12 flex justify-between items-center bg-[#050a10]/95 border-t border-cyan-500/10">
@@ -261,7 +252,7 @@
     ];
 
     /** --- STATE --- **/
-    let allMaps = JSON.parse(localStorage.getItem('okr_v4_8_maps')) || { "New Strategy": { label: "Strategic Objective", value: "0", unit: "%", children: [] } };
+    let allMaps = JSON.parse(localStorage.getItem('okr_v4_8_maps')) || { "New Strategy": { label: "", value: "0", unit: "%", children: [] } };
     let currentMapId = localStorage.getItem('okr_v4_8_current_id') || Object.keys(allMaps)[0];
     let navigationPath = [];
     let isPaused = false;
@@ -270,7 +261,6 @@
     let rotationSpeed = DEFAULT_SPEED;
     const radius = 135;
 
-    /** --- ELEMENTS --- **/
     const vizArea = document.getElementById('viz-area');
     const modal = document.getElementById('modal-container');
     const inputLabel = document.getElementById('input-label');
@@ -280,7 +270,7 @@
     const hintTextEl = document.getElementById('hint-text');
     let modalAction = null;
 
-    /** --- TYPING --- **/
+    /** --- TYPING ANIMATION --- **/
     let currentHintIndex = -1;
     function typeHint() {
         let nextIndex;
@@ -305,7 +295,7 @@
     function showToast(msg) { toast.innerText = msg; toast.style.opacity = 1; setTimeout(() => toast.style.opacity = 0, 2000); }
     function save() { localStorage.setItem('okr_v4_8_maps', JSON.stringify(allMaps)); localStorage.setItem('okr_v4_8_current_id', currentMapId); }
 
-    /** --- CLOUD --- **/
+    /** --- CLOUD SYNC --- **/
     async function gasSync(action) {
         if(!GAS_URL) { showToast("GAS URL NOT SET"); return; }
         showToast(`${action.toUpperCase()}ING...`);
@@ -320,7 +310,7 @@
         } catch (e) { showToast("CLOUD SYNC ERROR"); }
     }
 
-    /** --- MODAL --- **/
+    /** --- MODAL LOGIC --- **/
     function openModal(type, options = {}) {
         document.getElementById('modal-title').innerText = options.title || 'Mission Control';
         document.getElementById('modal-desc').classList.add('hidden');
@@ -337,7 +327,7 @@
     document.getElementById('modal-ok').onclick = () => { if(modalAction) modalAction({ label: inputLabel.value, value: inputValue.value, unit: inputUnit.value }); modal.style.display = 'none'; save(); render(); };
     document.getElementById('modal-cancel').onclick = () => modal.style.display = 'none';
 
-    /** --- RENDER --- **/
+    /** --- RENDERING --- **/
     function render() {
         vizArea.innerHTML = '';
         const node = getCurrentNode();
@@ -348,14 +338,14 @@
             navArea.classList.remove('hidden');
             let parent = allMaps[currentMapId];
             for(let i=0; i<navigationPath.length-1; i++) parent = parent.children[navigationPath[i]];
-            document.getElementById('back-label').innerText = parent.label;
+            document.getElementById('back-label').innerText = parent.label || "(Empty)";
         } else { navArea.classList.add('hidden'); }
 
         const center = document.createElement('div');
         center.className = 'center-node';
         center.innerHTML = `
-            <div class="text-[14px] font-black uppercase tracking-tight px-1">${node.label}</div>
-            <div class="text-[12px] text-cyan-400 font-black mt-2 tracking-widest">${node.value}${node.unit}</div>
+            <div class="text-[17px] font-black uppercase tracking-tight px-1 min-h-[1.2em]">${node.label}</div>
+            <div class="text-[14px] text-cyan-400 font-black mt-2 tracking-widest">${node.value}${node.unit}</div>
             <div id="center-edit-btn" class="absolute -top-3 -right-3 w-10 h-10 bg-black border-2 border-cyan-500 rounded-full flex items-center justify-center text-cyan-400 shadow-xl active:scale-90 transition-transform">
                 <span class="text-xs">✎</span>
             </div>
@@ -368,8 +358,8 @@
                 const childEl = document.createElement('div');
                 childEl.className = 'node'; childEl.id = `node-${i}`;
                 childEl.innerHTML = `
-                    <div class="text-[10px] font-black text-white uppercase tracking-tighter truncate w-full">${child.label}</div>
-                    <div class="text-[10px] text-cyan-400 font-black mt-1">${child.value}${child.unit}</div>
+                    <div class="text-[12px] font-black text-white uppercase tracking-tighter truncate w-full">${child.label}</div>
+                    <div class="text-[12px] text-cyan-400 font-black mt-1">${child.value}${child.unit}</div>
                     <div class="absolute -top-3 -right-2 flex gap-1 z-50">
                         <div class="edit-btn w-8 h-8 bg-black border border-cyan-500 rounded-full flex items-center justify-center text-cyan-400 shadow-xl active:bg-cyan-900 transition-colors">✎</div>
                         <div class="del-btn w-8 h-8 bg-black border border-red-500 rounded-full flex items-center justify-center text-red-500 shadow-xl active:bg-red-900 transition-colors">✕</div>
@@ -391,14 +381,14 @@
             item.className = `flex justify-between items-center p-4 rounded-xl border mb-2 transition-all active:scale-95 ${id === currentMapId ? 'border-cyan-400 bg-cyan-500/10' : 'border-white/5 bg-white/5'}`;
             item.innerHTML = `<span class="text-xs font-black uppercase truncate pr-2 tracking-tight">${id}</span><button class="text-red-500 text-[10px] font-black border border-red-900 px-2 py-1 rounded">DEL</button>`;
             item.onclick = (e) => {
-                if(e.target.tagName === 'BUTTON') { openModal('confirm', { title: 'Delete Map', desc: `DELETE PROJECT "${id}"?`, onConfirm: () => { delete allMaps[id]; if(currentMapId === id) { currentMapId = Object.keys(allMaps)[0] || 'Default'; if(!allMaps[currentMapId]) allMaps[currentMapId] = initialData["New Strategy"]; } navigationPath = []; } }); return; }
+                if(e.target.tagName === 'BUTTON') { openModal('confirm', { title: 'Delete Map', desc: `DELETE PROJECT "${id}"?`, onConfirm: () => { delete allMaps[id]; if(currentMapId === id) { currentMapId = Object.keys(allMaps)[0] || 'Default'; if(!allMaps[currentMapId]) allMaps[currentMapId] = { label: "", value: "0", unit: "%", children: [] }; } navigationPath = []; } }); return; }
                 currentMapId = id; navigationPath = []; render(); document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show');
             };
             list.appendChild(item);
         });
     }
 
-    /** --- LOOP --- **/
+    /** --- ANIMATION LOOP --- **/
     function animate() {
         if(!isPaused) angle += rotationSpeed;
         const node = getCurrentNode();
@@ -415,7 +405,7 @@
         requestAnimationFrame(animate);
     }
 
-    /** --- BUTTONS --- **/
+    /** --- EVENT LISTENERS --- **/
     document.getElementById('btn-menu').onclick = () => { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('show'); };
     document.getElementById('overlay').onclick = document.getElementById('close-sidebar').onclick = () => { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); };
     document.getElementById('btn-pause').onclick = () => { isPaused = !isPaused; document.getElementById('svg-stop').classList.toggle('hidden', isPaused); document.getElementById('svg-play').classList.toggle('hidden', !isPaused); };
@@ -423,10 +413,20 @@
     document.getElementById('btn-back').onclick = () => { navigationPath.pop(); render(); };
     document.getElementById('btn-purge').onclick = () => { const node = getCurrentNode(); openModal('confirm', { title: 'Reset Action', desc: 'DELETE ALL CHILDREN IN THIS LEVEL?', onConfirm: () => { node.children = []; showToast("RESET SUCCESS"); } }); };
     document.getElementById('btn-add').onclick = () => { const node = getCurrentNode(); openModal('add', { title: 'New Mission', unit: node.unit || '%', onConfirm: (res) => { if(!node.children) node.children = []; node.children.push({ label: res.label, value: res.value, unit: res.unit, children: [] }); } }); };
-    document.getElementById('new-map-btn').onclick = () => { openModal('new_map', { title: 'Initialize Map', label: 'New Project', value: '0', unit: '%', onConfirm: (res) => { allMaps[res.label] = { label: res.label, value: res.value, unit: res.unit, children: [] }; currentMapId = res.label; navigationPath = []; document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); } }); };
+    
+    // ★ 修正箇所: 新規マップ作成時にセンターラベル(label)を空文字にする
+    document.getElementById('new-map-btn').onclick = () => { 
+        openModal('new_map', { title: 'Initialize Map', label: 'New Project', value: '0', unit: '%', onConfirm: (res) => { 
+            allMaps[res.label] = { label: "", value: res.value, unit: res.unit, children: [] }; 
+            currentMapId = res.label; navigationPath = []; 
+            document.getElementById('sidebar').classList.remove('open'); 
+            document.getElementById('overlay').classList.remove('show'); 
+        } }); 
+    };
+    
     document.getElementById('btn-sync').onclick = () => gasSync('load');
 
-    /** --- DRAG --- **/
+    /** --- TOUCH/DRAG --- **/
     let sX = 0, isD = false;
     vizArea.addEventListener('touchstart', (e) => { if(e.target.closest('.node') || e.target.closest('button')) return; isD = true; sX = e.touches[0].clientX; });
     window.addEventListener('touchmove', (e) => { if(!isD) return; const delta = e.touches[0].clientX - sX; angle += delta * 0.005; sX = e.touches[0].clientX; });
